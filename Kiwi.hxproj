@@ -1,34 +1,41 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <project version="2">
   <!-- Output SWF options -->
   <output>
     <movie outputType="Application" />
     <movie input="" />
     <movie path="application.xml" />
-    <movie fps="0" />
-    <movie width="0" />
-    <movie height="0" />
+    <movie fps="60" />
+    <movie width="700" />
+    <movie height="700" />
     <movie version="3" />
     <movie minorVersion="0" />
     <movie platform="NME" />
-    <movie background="#FFFFFF" />
+    <movie background="BBBBBB" />
     <movie preferredSDK=";3;" />
   </output>
   <!-- Other classes to be compiled into your SWF -->
   <classpaths>
+    <class path="C:\HaxeToolkit\haxe\lib\lime\2,0,0-alpha,6" />
+    <class path="C:\HaxeToolkit\haxe\lib\screenmanager\0,0,0" />
+    <class path="C:\HaxeToolkit\haxe\lib\tilelayer\0,2,0" />
+    <class path="C:\HaxeToolkit\haxe\lib\openfl\2,1,4" />
+    <class path="C:\HaxeToolkit\haxe\lib\actuate\1,7,5" />
     <class path="src" />
+    <class path="bin\flash\haxe" />
   </classpaths>
   <!-- Build options -->
   <build>
-    <option directives="" />
+    <option directives="lime=2.0.0-alpha.6&#xA;screenmanager=0.1&#xA;tilelayer=0.2.0&#xA;openfl=2.1.4&#xA;actuate=1.7.5&#xA;tools=2.0.0-alpha.6&#xA;no-compilation&#xA;openfl-flash&#xA;web" />
     <option flashStrict="False" />
-    <option mainClass="com.fs.kiwi.Main" />
+    <option noInlineOnDebug="False" />
+    <option mainClass="ApplicationMain" />
     <option enabledebug="True" />
-    <option additional="" />
+    <option additional="-swf-version 11.2" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>
-    <library name="nme" />
+    <!-- example: <library name="..." /> -->
   </haxelib>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>
@@ -40,7 +47,7 @@
   </library>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>
-    <!-- example: <hidden path="..." /> -->
+    <hidden path="obj" />
   </hiddenPaths>
   <!-- Executed before build -->
   <preBuildCommand />

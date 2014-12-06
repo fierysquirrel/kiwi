@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<TextureAtlas>
+<SubTexture name="bullet" x="64" y="131" width="5" height="5"></SubTexture>
+<SubTexture name="cannon-back" x="0" y="194" width="7" height="2"></SubTexture>
+<SubTexture name="cannon-front" x="76" y="99" width="22" height="19"></SubTexture>
+<SubTexture name="floor" x="0" y="163" width="25" height="25"></SubTexture>
+<SubTexture name="kiwi-blink-0" x="117" y="65" width="37" height="31"></SubTexture>
+<SubTexture name="kiwi-blink-1" x="156" y="33" width="37" height="31"></SubTexture>
+<SubTexture name="kiwi-blink-2" x="198" y="0" width="37" height="31"></SubTexture>
+<SubTexture name="kiwi-blink-3" x="155" y="65" width="37" height="31"></SubTexture>
+<SubTexture name="kiwi-breathe-0" x="194" y="33" width="37" height="31"></SubTexture>
+<SubTexture name="kiwi-breathe-1" x="121" y="0" width="38" height="31"></SubTexture>
+<SubTexture name="kiwi-breathe-2" x="193" y="65" width="37" height="31"></SubTexture>
+<SubTexture name="kiwi-idle" x="0" y="99" width="37" height="31"></SubTexture>
+<SubTexture name="kiwi-item" x="26" y="163" width="20" height="15"></SubTexture>
+<SubTexture name="kiwi-item-bright-1" x="76" y="119" width="6" height="5"></SubTexture>
+<SubTexture name="kiwi-item-bright-2" x="0" y="197" width="4" height="7"></SubTexture>
+<SubTexture name="kiwi-item-bright-3" x="70" y="131" width="1" height="8"></SubTexture>
+<SubTexture name="kiwi-item-bright-4" x="99" y="99" width="3" height="7"></SubTexture>
+<SubTexture name="kiwi-item-bright-5" x="38" y="157" width="6" height="5"></SubTexture>
+<SubTexture name="kiwi-jump-down-0" x="160" y="0" width="37" height="32"></SubTexture>
+<SubTexture name="kiwi-jump-down-1" x="0" y="66" width="38" height="32"></SubTexture>
+<SubTexture name="kiwi-jump-up-0" x="0" y="32" width="38" height="33"></SubTexture>
+<SubTexture name="kiwi-jump-up-1" x="39" y="33" width="38" height="32"></SubTexture>
+<SubTexture name="kiwi-shadow" x="0" y="189" width="22" height="4"></SubTexture>
+<SubTexture name="kiwi-start-jump-0" x="0" y="131" width="37" height="31"></SubTexture>
+<SubTexture name="kiwi-start-jump-1" x="117" y="33" width="38" height="31"></SubTexture>
+<SubTexture name="kiwi-start-jump-2" x="39" y="66" width="38" height="32"></SubTexture>
+<SubTexture name="kiwi-walk-0" x="38" y="99" width="37" height="31"></SubTexture>
+<SubTexture name="kiwi-walk-1" x="78" y="33" width="38" height="32"></SubTexture>
+<SubTexture name="kiwi-walk-2" x="41" y="0" width="39" height="32"></SubTexture>
+<SubTexture name="kiwi-walk-3" x="0" y="0" width="40" height="31"></SubTexture>
+<SubTexture name="kiwi-walk-4" x="81" y="0" width="39" height="32"></SubTexture>
+<SubTexture name="kiwi-walk-5" x="78" y="66" width="38" height="32"></SubTexture>
+<SubTexture name="spikes" x="38" y="131" width="25" height="25"></SubTexture>
+</TextureAtlas>

@@ -8,18 +8,19 @@
 	<!-- output -->
 	<app main="com.fs.kiwi.Main" file="Kiwi" path="bin" />
 	
-	<window background="#000000" fps="60" />
-	<window width="800" height="480" unless="mobile" />
+	<window background="#bbbbbb" fps="60" />
+	<window width="700" height="700" unless="mobile" />
 	<window orientation="landscape" vsync="false" antialiasing="0" if="cpp" />
 	
 	<!-- classpath, haxe libs -->
 	<source path="src" />
 	<haxelib name="openfl" />
 	<haxelib name="actuate" />
+	<haxelib name="screenmanager" />
 	
 	<!-- assets -->
 	<icon path="assets/openfl.svg" />
-	<assets path="assets/img" rename="img" />
+	<assets path="assets" rename="assets" />
 	
 	<!-- optimize output
 	<haxeflag name="-dce full" /> -->
