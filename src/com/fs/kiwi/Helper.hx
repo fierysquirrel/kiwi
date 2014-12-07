@@ -715,4 +715,14 @@ class Helper
 		
 		return anim;
 	}
+	
+	public static function GetLevelType(level : Array<Array<String>>, i : Int, j: Int) : String
+	{
+		return level[j][i].charAt(0);
+	}
+	
+	public static function GetLevelRotation(level : Array<Array<String>>, i : Int, j: Int) : String
+	{
+		return level[j][i].charAt(1);
+	}
 }

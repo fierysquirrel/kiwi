@@ -552,7 +552,8 @@ class Animation2D implements IAnimation
 	 * */
 	public function Rotate(rotation : Float)
 	{
-		frames[currentFrame].rotation = rotation;
+		for(f in frames)
+			f.rotation = rotation;
 	}
 	
 	/*
