@@ -8,6 +8,9 @@ import fs.screenmanager.ScreenManager;
 import fs.screenmanager.GameScreen;
 import com.fs.kiwi.screens.GamePlayScreen;
 import flash.events.KeyboardEvent;
+import openfl.Assets;
+import extension.share.Share;
+import com.fs.kiwi.screens.IntroScreen;
 
 /**
  * ...
@@ -62,10 +65,23 @@ class Main extends Sprite
 		Lib.current.stage.addEventListener(KeyboardEvent.KEY_UP, ScreenManager.HandleKeyboardEvent);
 		
 		//Initial screen
-		initialScreen = new GamePlayScreen();
+		//initialScreen = new GamePlayScreen();
+		initialScreen = new IntroScreen();
 		
 		if(initialScreen != null)
 			ScreenManager.LoadScreen(initialScreen);
+		
+		Globals.FONT = Assets.getFont("assets/fonts/TektonProBold.ttf");
+		Globals.SOUND_JUMP = Assets.getSound("assets/sounds/jump.wav");
+		Globals.SOUND_SHOOT = Assets.getSound("assets/sounds/shoot.wav");
+		Globals.SOUND_HIT = Assets.getSound("assets/sounds/hit.wav");
+		Globals.SOUND_GAMEOVER = Assets.getSound("assets/sounds/gameover.wav");
+		Globals.SOUND_KIWI = Assets.getSound("assets/sounds/kiwi.wav");
+		Globals.SOUND_NEW_KIWI = Assets.getSound("assets/sounds/new-kiwi.wav");
+		Globals.SOUND_BULLET_COLLIDE = Assets.getSound("assets/sounds/bullet-collide.wav");
+		Globals.SOUNDTRACK = Assets.getSound("assets/sounds/soundtrack.mp3");
+		
+		Share.init(Share.TWITTER); // for non supported targets, we share on Twitter (you can also use Share.FACEBOOK)
 		
 		// Stage:
 		// stage.stageWidth x stage.stageHeight @ stage.dpiScale

@@ -725,4 +725,14 @@ class Helper
 	{
 		return level[j][i].charAt(1);
 	}
+	
+	public static function CreateText(fontName : String, text : String, size : Int, color : Int,letterSpacing : Int, pos : Point = null, xAlign : String = "center",yAlign : String = "center", bold : Bool = false) : Text
+	{
+		var format : TextFormat;
+		var textField : Text;
+
+		textField = new Text(fontName, text, size, color, letterSpacing, pos, xAlign, yAlign,bold);
+		
+		return textField;
+	}
 }

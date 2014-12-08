@@ -43,8 +43,32 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		#if flash
 		
+		className.set ("assets/fonts/TektonProBold.ttf", __ASSET__assets_fonts_tektonprobold_ttf);
+		type.set ("assets/fonts/TektonProBold.ttf", AssetType.FONT);
 		className.set ("assets/openfl.svg", __ASSET__assets_openfl_svg);
 		type.set ("assets/openfl.svg", AssetType.TEXT);
+		className.set ("assets/sounds/bullet-collide.wav", __ASSET__assets_sounds_bullet_collide_wav);
+		type.set ("assets/sounds/bullet-collide.wav", AssetType.SOUND);
+		className.set ("assets/sounds/gameover.wav", __ASSET__assets_sounds_gameover_wav);
+		type.set ("assets/sounds/gameover.wav", AssetType.SOUND);
+		className.set ("assets/sounds/hit.wav", __ASSET__assets_sounds_hit_wav);
+		type.set ("assets/sounds/hit.wav", AssetType.SOUND);
+		className.set ("assets/sounds/jump.wav", __ASSET__assets_sounds_jump_wav);
+		type.set ("assets/sounds/jump.wav", AssetType.SOUND);
+		className.set ("assets/sounds/kiwi.wav", __ASSET__assets_sounds_kiwi_wav);
+		type.set ("assets/sounds/kiwi.wav", AssetType.SOUND);
+		className.set ("assets/sounds/new-kiwi.wav", __ASSET__assets_sounds_new_kiwi_wav);
+		type.set ("assets/sounds/new-kiwi.wav", AssetType.SOUND);
+		className.set ("assets/sounds/shoot.wav", __ASSET__assets_sounds_shoot_wav);
+		type.set ("assets/sounds/shoot.wav", AssetType.SOUND);
+		className.set ("assets/sounds/soundtrack.mp3", __ASSET__assets_sounds_soundtrack_mp3);
+		type.set ("assets/sounds/soundtrack.mp3", AssetType.MUSIC);
+		className.set ("assets/sounds/soundtrack.ogg", __ASSET__assets_sounds_soundtrack_ogg);
+		type.set ("assets/sounds/soundtrack.ogg", AssetType.SOUND);
+		className.set ("assets/sprites/gameover.png", __ASSET__assets_sprites_gameover_png);
+		type.set ("assets/sprites/gameover.png", AssetType.IMAGE);
+		className.set ("assets/sprites/intro.png", __ASSET__assets_sprites_intro_png);
+		type.set ("assets/sprites/intro.png", AssetType.IMAGE);
 		className.set ("assets/sprites/spritesheet.png", __ASSET__assets_sprites_spritesheet_png);
 		type.set ("assets/sprites/spritesheet.png", AssetType.IMAGE);
 		className.set ("assets/sprites/spritesheet.xml", __ASSET__assets_sprites_spritesheet_xml);
@@ -54,10 +78,58 @@ class DefaultAssetLibrary extends AssetLibrary {
 		#elseif html5
 		
 		var id;
+		id = "assets/fonts/TektonProBold.ttf";
+		className.set (id, __ASSET__assets_fonts_tektonprobold_ttf);
+		
+		type.set (id, AssetType.FONT);
 		id = "assets/openfl.svg";
 		path.set (id, id);
 		
 		type.set (id, AssetType.TEXT);
+		id = "assets/sounds/bullet-collide.wav";
+		path.set (id, id);
+		
+		type.set (id, AssetType.SOUND);
+		id = "assets/sounds/gameover.wav";
+		path.set (id, id);
+		
+		type.set (id, AssetType.SOUND);
+		id = "assets/sounds/hit.wav";
+		path.set (id, id);
+		
+		type.set (id, AssetType.SOUND);
+		id = "assets/sounds/jump.wav";
+		path.set (id, id);
+		
+		type.set (id, AssetType.SOUND);
+		id = "assets/sounds/kiwi.wav";
+		path.set (id, id);
+		
+		type.set (id, AssetType.SOUND);
+		id = "assets/sounds/new-kiwi.wav";
+		path.set (id, id);
+		
+		type.set (id, AssetType.SOUND);
+		id = "assets/sounds/shoot.wav";
+		path.set (id, id);
+		
+		type.set (id, AssetType.SOUND);
+		id = "assets/sounds/soundtrack.mp3";
+		path.set (id, id);
+		
+		type.set (id, AssetType.MUSIC);
+		id = "assets/sounds/soundtrack.ogg";
+		path.set (id, id);
+		
+		type.set (id, AssetType.SOUND);
+		id = "assets/sprites/gameover.png";
+		path.set (id, id);
+		
+		type.set (id, AssetType.IMAGE);
+		id = "assets/sprites/intro.png";
+		path.set (id, id);
+		
+		type.set (id, AssetType.IMAGE);
 		id = "assets/sprites/spritesheet.png";
 		path.set (id, id);
 		
@@ -74,8 +146,44 @@ class DefaultAssetLibrary extends AssetLibrary {
 		
 		/*var useManifest = false;
 		
+		className.set ("assets/fonts/TektonProBold.ttf", __ASSET__assets_fonts_tektonprobold_ttf);
+		type.set ("assets/fonts/TektonProBold.ttf", AssetType.FONT);
+		
 		className.set ("assets/openfl.svg", __ASSET__assets_openfl_svg);
 		type.set ("assets/openfl.svg", AssetType.TEXT);
+		
+		className.set ("assets/sounds/bullet-collide.wav", __ASSET__assets_sounds_bullet_collide_wav);
+		type.set ("assets/sounds/bullet-collide.wav", AssetType.SOUND);
+		
+		className.set ("assets/sounds/gameover.wav", __ASSET__assets_sounds_gameover_wav);
+		type.set ("assets/sounds/gameover.wav", AssetType.SOUND);
+		
+		className.set ("assets/sounds/hit.wav", __ASSET__assets_sounds_hit_wav);
+		type.set ("assets/sounds/hit.wav", AssetType.SOUND);
+		
+		className.set ("assets/sounds/jump.wav", __ASSET__assets_sounds_jump_wav);
+		type.set ("assets/sounds/jump.wav", AssetType.SOUND);
+		
+		className.set ("assets/sounds/kiwi.wav", __ASSET__assets_sounds_kiwi_wav);
+		type.set ("assets/sounds/kiwi.wav", AssetType.SOUND);
+		
+		className.set ("assets/sounds/new-kiwi.wav", __ASSET__assets_sounds_new_kiwi_wav);
+		type.set ("assets/sounds/new-kiwi.wav", AssetType.SOUND);
+		
+		className.set ("assets/sounds/shoot.wav", __ASSET__assets_sounds_shoot_wav);
+		type.set ("assets/sounds/shoot.wav", AssetType.SOUND);
+		
+		className.set ("assets/sounds/soundtrack.mp3", __ASSET__assets_sounds_soundtrack_mp3);
+		type.set ("assets/sounds/soundtrack.mp3", AssetType.MUSIC);
+		
+		className.set ("assets/sounds/soundtrack.ogg", __ASSET__assets_sounds_soundtrack_ogg);
+		type.set ("assets/sounds/soundtrack.ogg", AssetType.SOUND);
+		
+		className.set ("assets/sprites/gameover.png", __ASSET__assets_sprites_gameover_png);
+		type.set ("assets/sprites/gameover.png", AssetType.IMAGE);
+		
+		className.set ("assets/sprites/intro.png", __ASSET__assets_sprites_intro_png);
+		type.set ("assets/sprites/intro.png", AssetType.IMAGE);
 		
 		className.set ("assets/sprites/spritesheet.png", __ASSET__assets_sprites_spritesheet_png);
 		type.set ("assets/sprites/spritesheet.png", AssetType.IMAGE);
@@ -654,7 +762,19 @@ class DefaultAssetLibrary extends AssetLibrary {
 #if !display
 #if flash
 
+@:keep @:bind #if display private #end class __ASSET__assets_fonts_tektonprobold_ttf extends flash.text.Font { }
 @:keep @:bind #if display private #end class __ASSET__assets_openfl_svg extends flash.utils.ByteArray { }
+@:keep @:bind #if display private #end class __ASSET__assets_sounds_bullet_collide_wav extends flash.media.Sound { }
+@:keep @:bind #if display private #end class __ASSET__assets_sounds_gameover_wav extends flash.media.Sound { }
+@:keep @:bind #if display private #end class __ASSET__assets_sounds_hit_wav extends flash.media.Sound { }
+@:keep @:bind #if display private #end class __ASSET__assets_sounds_jump_wav extends flash.media.Sound { }
+@:keep @:bind #if display private #end class __ASSET__assets_sounds_kiwi_wav extends flash.media.Sound { }
+@:keep @:bind #if display private #end class __ASSET__assets_sounds_new_kiwi_wav extends flash.media.Sound { }
+@:keep @:bind #if display private #end class __ASSET__assets_sounds_shoot_wav extends flash.media.Sound { }
+@:keep @:bind #if display private #end class __ASSET__assets_sounds_soundtrack_mp3 extends flash.media.Sound { }
+@:keep @:bind #if display private #end class __ASSET__assets_sounds_soundtrack_ogg extends flash.media.Sound { }
+@:keep @:bind #if display private #end class __ASSET__assets_sprites_gameover_png extends flash.display.BitmapData { public function new () { super (0, 0, true, 0); } }
+@:keep @:bind #if display private #end class __ASSET__assets_sprites_intro_png extends flash.display.BitmapData { public function new () { super (0, 0, true, 0); } }
 @:keep @:bind #if display private #end class __ASSET__assets_sprites_spritesheet_png extends flash.display.BitmapData { public function new () { super (0, 0, true, 0); } }
 @:keep @:bind #if display private #end class __ASSET__assets_sprites_spritesheet_xml extends flash.utils.ByteArray { }
 
@@ -662,6 +782,18 @@ class DefaultAssetLibrary extends AssetLibrary {
 #elseif html5
 
 #if openfl
+@:keep #if display private #end class __ASSET__assets_fonts_tektonprobold_ttf extends openfl.text.Font { public function new () { super (); fontName = "assets/fonts/TektonProBold.ttf"; } } 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -671,7 +803,19 @@ class DefaultAssetLibrary extends AssetLibrary {
 #elseif (windows || mac || linux)
 
 
+//@:font("assets/fonts/TektonProBold.ttf") class __ASSET__assets_fonts_tektonprobold_ttf extends openfl.text.Font {}
 //@:file("assets/openfl.svg") class __ASSET__assets_openfl_svg extends lime.utils.ByteArray {}
+//@:sound("assets/sounds/bullet-collide.wav") class __ASSET__assets_sounds_bullet_collide_wav extends openfl.media.Sound {}
+//@:sound("assets/sounds/gameover.wav") class __ASSET__assets_sounds_gameover_wav extends openfl.media.Sound {}
+//@:sound("assets/sounds/hit.wav") class __ASSET__assets_sounds_hit_wav extends openfl.media.Sound {}
+//@:sound("assets/sounds/jump.wav") class __ASSET__assets_sounds_jump_wav extends openfl.media.Sound {}
+//@:sound("assets/sounds/kiwi.wav") class __ASSET__assets_sounds_kiwi_wav extends openfl.media.Sound {}
+//@:sound("assets/sounds/new-kiwi.wav") class __ASSET__assets_sounds_new_kiwi_wav extends openfl.media.Sound {}
+//@:sound("assets/sounds/shoot.wav") class __ASSET__assets_sounds_shoot_wav extends openfl.media.Sound {}
+//@:sound("assets/sounds/soundtrack.mp3") class __ASSET__assets_sounds_soundtrack_mp3 extends openfl.media.Sound {}
+//@:sound("assets/sounds/soundtrack.ogg") class __ASSET__assets_sounds_soundtrack_ogg extends openfl.media.Sound {}
+//@:bitmap("assets/sprites/gameover.png") class __ASSET__assets_sprites_gameover_png extends openfl.display.BitmapData {}
+//@:bitmap("assets/sprites/intro.png") class __ASSET__assets_sprites_intro_png extends openfl.display.BitmapData {}
 //@:bitmap("assets/sprites/spritesheet.png") class __ASSET__assets_sprites_spritesheet_png extends openfl.display.BitmapData {}
 //@:file("assets/sprites/spritesheet.xml") class __ASSET__assets_sprites_spritesheet_xml extends lime.utils.ByteArray {}
 //

@@ -9,6 +9,8 @@
 -D openfl=2.1.4
 -cp C:/HaxeToolkit/haxe/lib/actuate/1,7,5
 -D actuate=1.7.5
+-cp C:/HaxeToolkit/haxe/lib/openfl-share/1,0,1
+-D openfl-share=1.0.1
 -cp src
 -D lime-openal
 -D tools=2.0.0-alpha.6

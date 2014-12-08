@@ -1,8 +1,14 @@
 package com.fs.kiwi.screens;
 
 import aze.display.TileSprite;
+import com.fs.kiwi.Color;
 import com.fs.kiwi.GameObject;
+import com.fs.kiwi.particlesystem.ParticleSystem;
+import com.fs.kiwi.screens.GameOverScreen;
+import com.fs.kiwi.sound.Sound;
+import com.fs.kiwi.Text;
 import flash.display.Graphics;
+import flash.geom.Point;
 import fs.screenmanager.GameScreen;
 import aze.display.SparrowTilesheet;
 import flash.display.BitmapData;
@@ -15,6 +21,8 @@ import com.fs.kiwi.mapobjects.Spike;
 import com.fs.kiwi.mapobjects.Cannon;
 import flash.ui.Keyboard;
 import com.fs.kiwi.mapobjects.Empty;
+import com.fs.kiwi.items.Item;
+import fs.screenmanager.ScreenManager;
 
 /**
  * ...
@@ -26,12 +34,45 @@ class GamePlayScreen extends GameScreen
 	//private var level : Array<Array<String>>;
 	private var level : Array<Array<GameObject>>;
 	private var tilelayer : TileLayer;
+	private var bulletlayer : TileLayer;
+	private var items : Array<Item>;
+	private var cannons : Array<Cannon>;
 	
 	private var player : Player;
+	
+	private var rPressed : Bool;
+	private var lPressed : Bool;
+	
+	private var kiwiTimer : Float;
+	private var kiwiTime : Float;
+	private var numberOfKiwis : Int;
+	
+	private var cannonTimer : Float;
+	private var cannonTime : Float;
+	
+	private var kiwisText : Text;
+	private var hudLifes : Array<TileSprite>;
+	private var hudKiwi : TileSprite;
+	private var tutMove : TileSprite;
+	private var tutJump : TileSprite;
+	private var prevLives : Int;
+	
+	private var soundtrack : Sound;
+	
+	private var particleSystem : ParticleSystem;
 	
 	public function new() 
 	{
 		super();
+		rPressed = false;
+		lPressed = false;
+		
+		kiwiTimer = 0;
+		numberOfKiwis = 0;
+		cannonTimer = 0;
+		cannonTime = 30;
+		
+		particleSystem = new ParticleSystem();
 	}
 	
 	override public function LoadContent():Void 
@@ -46,15 +87,33 @@ class GamePlayScreen extends GameScreen
 		xml = Assets.getText(Globals.SPRITES_PATH + "spritesheet.xml");
 		bitmapData = Assets.getBitmapData(Globals.SPRITES_PATH + "spritesheet.png");
 		
+		items = new Array<Item>();
+		cannons = new Array<Cannon>();
 		tilesheet = new SparrowTilesheet(bitmapData, xml);
 		tilelayer = new TileLayer(tilesheet);
+		bulletlayer = new TileLayer(tilesheet);
 		
+		layers.set("0", bulletlayer);
 		layers.set("1", tilelayer);
 		
+		addChild(bulletlayer.view);
 		addChild(tilelayer.view);
 		
 		//Level
 		InitLevel();
+		
+		kiwiTime = 1 + Math.random() * 10;
+
+		kiwisText = Helper.CreateText(Globals.FONT.fontName, "x " + numberOfKiwis, 15, 0xffffff, 1);
+		kiwisText.x = 115;
+		kiwisText.y = 73;
+		kiwisText.alpha = 0.7;
+		addChild(kiwisText);
+		
+		soundtrack = new Sound(Globals.SOUNDTRACK, true);
+		soundtrack.Play();
+		
+		particleSystem.LoadContent(layers);
 	}
 	
 	override public function Update(gameTime:Float):Void 
@@ -63,6 +122,9 @@ class GamePlayScreen extends GameScreen
 		
 		player.Update(gameTime);
 		
+		for (c in cannons)
+			c.Update(gameTime);
+			
 		HandlePhysics();
 		
 		if (isDebugging)
@@ -71,6 +133,72 @@ class GamePlayScreen extends GameScreen
 			DrawGrid();
 			DrawPlayerFrame(player.GetGridX(),player.GetGridY());
 		}
+		
+		if (kiwiTimer > Helper.ConvertSecToMillisec(kiwiTime))
+		{
+			//trace("kiwi time!");
+			
+			
+			switch(cast(1 + Math.random() * 4,Int))
+			{
+				case 1:
+					AddKiwi(1, cast(1 + Math.random() * Globals.NUMBER_GRID_SQUARES_Y - 2,Int));
+				case 2:
+					AddKiwi(cast(1 + Math.random() * Globals.NUMBER_GRID_SQUARES_X - 2,Int), 1);
+				case 3:
+					AddKiwi(cast(1 + Math.random() * Globals.NUMBER_GRID_SQUARES_X - 2,Int),Globals.NUMBER_GRID_SQUARES_Y - 2);
+				case 4:
+					AddKiwi(Globals.NUMBER_GRID_SQUARES_X - 2, cast(1 + Math.random() * Globals.NUMBER_GRID_SQUARES_Y - 2,Int));
+			}
+			kiwiTimer = 0;
+		}
+		else
+			kiwiTimer += gameTime;
+			
+		if (cannonTimer > Helper.ConvertSecToMillisec(cannonTime))
+		{
+			AddCannon(cast(5 + Math.random() * (Globals.NUMBER_GRID_SQUARES_X - 5),Int), cast(5 + Math.random() * (Globals.NUMBER_GRID_SQUARES_Y - 8),Int),cast(1 + Math.random() * 4,Int));
+			cannonTimer = 0;
+		}
+		else
+			cannonTimer += gameTime;
+			
+		for (i in items)
+		{
+			if (i.IsPicked())
+			{
+				RemoveItem(i);
+				numberOfKiwis++;
+				kiwisText.text = "x " + numberOfKiwis;
+			}
+		}
+		
+		if (player.GetLives() <= 0)
+		{
+			soundtrack.Stop();
+			ScreenManager.LoadScreen(new GameOverScreen(numberOfKiwis));
+		}
+		else
+		{
+			if (prevLives != player.GetLives())
+			{
+				hudLifes[player.GetLives()].visible = false;
+				prevLives = player.GetLives();
+			}
+		}
+		
+		soundtrack.Update(gameTime);
+		particleSystem.Update(gameTime);
+	}
+	
+	private function RemoveItem(i : Item) : Void
+	{
+		tilelayer.removeChild(i.GetSprite());
+		level[i.GetGridX()][i.GetGridY()] = new Empty(Globals.ROTATION_0, i.GetGridX(),i.GetGridY());
+		items.remove(i);
+		
+		particleSystem.GenerateParticles("1", ["particle-4"], 50, new Point(i.GetX(), i.GetY()), 1, "random", new Point(1 - 2 * Math.random(), 1 - 2 * Math.random()), new Point(), [new Color(255, 255, 255)], 1);
+		particleSystem.GenerateParticles("1", ["particle-3"], 50, new Point(i.GetX(), i.GetY()), 1, "random", new Point(1 - 2*Math.random(),1 - 2*Math.random()), new Point(), [new Color(255,255,255)],1);
 	}
 	
 	private function HandlePhysics() : Void
@@ -155,34 +283,35 @@ class GamePlayScreen extends GameScreen
 		var kiwi : Kiwi;
 		var gameObject : GameObject;
 		var level : Array<Array<String>>;
+		var life : TileSprite;
 		
 		level = [["30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30"],
+				 ["30", "53", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "50", "30"],
 				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
 				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
+				 ["30", "00", "50", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "51", "00", "00", "00", "00", "30"],
+				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "53", "00", "00", "00", "00", "30"],
+				 ["30", "00", "00", "00", "00", "50", "00", "52", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "51", "00", "00", "00", "00", "00", "00", "00", "30"],
 				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
+				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "53", "00", "00", "00", "00", "00", "00", "00", "30"],
+				 ["30", "00", "00", "00", "00", "00", "00", "00", "50", "00", "52", "00", "00", "00", "00", "00", "51", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
 				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
+				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "53", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
+				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "50", "00", "52", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
 				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
+				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "53", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
+				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "51", "00", "00", "50", "00", "52", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
 				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
+				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "53", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
+				 ["30", "00", "00", "00", "00", "00", "00", "00", "51", "00", "00", "00", "00", "00", "00", "00", "00", "50", "00", "52", "00", "00", "00", "00", "00", "00", "00", "30"],
 				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
+				 ["30", "00", "00", "00", "00", "00", "00", "53", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
+				 ["30", "00", "00", "00", "00", "51", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "50", "00", "52", "00", "00", "00", "00", "30"],
 				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
+				 ["30", "00", "00", "00", "53", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
+				 ["30", "00", "51", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "52", "00", "30"],
 				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "20", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "00", "00", "10", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "30", "30", "30", "30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "30", "40", "30", "30", "30", "30", "30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "00", "00", "00", "00", "00", "00", "30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "00", "00", "00", "00", "00", "00", "30", "30", "30", "30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
-				 ["30", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "30"],
+				 ["30", "52", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "10", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "51", "30"],
 				 ["30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30"]];
 		
 		
@@ -201,7 +330,8 @@ class GamePlayScreen extends GameScreen
 				switch(type)
 				{
 					case Player.TYPE:
-						player = new Player(i, j);
+						player = new Player(i, j, this.level);
+						gameObject = new Empty(rotation, i, j);
 					case Empty.TYPE:
 						gameObject = new Empty(rotation, i, j);
 					case Kiwi.TYPE:
@@ -212,11 +342,21 @@ class GamePlayScreen extends GameScreen
 						gameObject = new Spike(rotation, i, j);
 					case Cannon.TYPE:
 						gameObject = new Cannon(rotation, i, j);
+						cast(gameObject, Cannon).SetBulletsLayer(bulletlayer);
+						cast(gameObject, Cannon).SetLevel(this.level);
+						cast(gameObject, Cannon).SetParticleSystem(particleSystem);
+						
+						cannons.push(cast(gameObject, Cannon));
 					default:
 				}
 				
-				if(gameObject != null)
-					gameObject.LoadContent(tilelayer);
+				if (gameObject != null)
+				{
+					if (gameObject.GetType() == Platform.TYPE)
+						gameObject.LoadContent(bulletlayer);
+					else
+						gameObject.LoadContent(tilelayer);
+				}
 					
 				if(gameObject != null)	
 					this.level[i][j] = gameObject;
@@ -224,6 +364,104 @@ class GamePlayScreen extends GameScreen
 		}
 		
 		player.LoadContent(tilelayer);
+		
+		for (c in cannons)
+			c.SetPlayer(player);
+		
+		tutMove = new TileSprite(bulletlayer, "tut-move");
+		tutMove.x = 300;
+		tutMove.y = 600;
+		tutMove.alpha = 0.7;
+		bulletlayer.addChild(tutMove);
+		
+		tutJump = new TileSprite(bulletlayer, "tut-jump");
+		tutJump.x = 370;
+		tutJump.y = 600;
+		tutJump.alpha = 0.7;
+		bulletlayer.addChild(tutJump);
+		
+		hudKiwi = new TileSprite(bulletlayer, "hud-kiwi");
+		hudKiwi.x = 100;
+		hudKiwi.y = 80;
+		hudKiwi.alpha = 0.7;
+		bulletlayer.addChild(hudKiwi);
+		hudLifes = new Array<TileSprite>();
+		for (i in 0...player.GetLives())
+		{
+			life = new TileSprite(bulletlayer, "hud-life");
+			life.x = 500 + 30 * i;
+			life.y = 80;
+			life.alpha = 0.7;
+			bulletlayer.addChild(life);
+			hudLifes.push(life);
+		}
+		
+		prevLives = player.GetLives();
+		
+		AddKiwi(player.GetGridX() + 3,player.GetGridY());
+	}
+	
+	private function AddKiwi(i : Int, j : Int) : Void
+	{
+		var kiwi : Kiwi;
+		var rot : String;
+		
+		if (level[i][j].GetType() == Empty.TYPE)
+		{
+			rot = Globals.ROTATION_0;
+			
+			if (i == 1)
+				rot = Globals.ROTATION_90;
+			if (j == 1)
+				rot = Globals.ROTATION_180;
+			if (i == Globals.NUMBER_GRID_SQUARES_X - 2)
+				rot = Globals.ROTATION_270;
+			if (j == Globals.NUMBER_GRID_SQUARES_X - 2)
+				rot = Globals.ROTATION_0;
+			
+			
+			kiwi = new Kiwi(rot, i, j);
+			kiwi.LoadContent(tilelayer);
+				
+			this.level[i][j] = kiwi;
+			items.push(kiwi);
+			kiwiTime = 1 + Math.random() * 10;
+		}
+	}
+	
+	private function AddCannon(i : Int, j : Int, r : Int) : Void
+	{
+		var cannon : Cannon;
+		var rot : String;
+		
+		if (level[i][j].GetType() == Empty.TYPE)
+		{
+			rot = Globals.ROTATION_0;
+			
+			switch(r)
+			{
+				case 1:
+					rot = Globals.ROTATION_0;
+				case 2:
+					rot = Globals.ROTATION_90;
+				case 3:
+					rot = Globals.ROTATION_180;
+				case 4:
+					rot = Globals.ROTATION_270;
+			}
+			
+			cannon = new Cannon(rot, i, j);
+			cannon.LoadContent(bulletlayer);
+			cannon.SetBulletsLayer(bulletlayer);
+			cannon.SetLevel(this.level);
+			cannon.SetPlayer(player);
+			cannon.SetParticleSystem(particleSystem);
+			cannons.push(cast(cannon, Cannon));
+						
+			this.level[i][j] = cannon;
+			
+			//kiwiTime = 1 + Math.random() * 10;
+		}
 	}
 	
 	override public function HandleKeyDownEvent(key:UInt):Void 
@@ -234,13 +472,12 @@ class GamePlayScreen extends GameScreen
 		{
 			case Keyboard.RIGHT:
 				player.MoveRight(level);
+				rPressed = true;
 			case Keyboard.LEFT:
 				player.MoveLeft(level);
-				
+				lPressed = true;
 			case Keyboard.UP:
 				player.Jump(level);
-			case Keyboard.DOWN:
-				player.MoveDown(level);
 		}
 	}
 	
@@ -251,11 +488,19 @@ class GamePlayScreen extends GameScreen
 		switch(key)
 		{
 			case Keyboard.RIGHT:
-				player.Stop();
+				if (rPressed)
+				{
+					player.Stop();
+					rPressed = false;
+				}
 			case Keyboard.LEFT:
-				player.Stop();
-			case Keyboard.R:
-				player.Reset();
+				if (lPressed)
+				{
+					player.Stop();
+					lPressed = false;
+				}
+			//case Keyboard.R:
+				//player.Reset();
 		}
 	}
 }

@@ -21,12 +21,13 @@
     <class path="C:\HaxeToolkit\haxe\lib\tilelayer\0,2,0" />
     <class path="C:\HaxeToolkit\haxe\lib\openfl\2,1,4" />
     <class path="C:\HaxeToolkit\haxe\lib\actuate\1,7,5" />
+    <class path="C:\HaxeToolkit\haxe\lib\openfl-share\1,0,1" />
     <class path="src" />
     <class path="bin\flash\haxe" />
   </classpaths>
   <!-- Build options -->
   <build>
-    <option directives="lime=2.0.0-alpha.6&#xA;screenmanager=0.1&#xA;tilelayer=0.2.0&#xA;openfl=2.1.4&#xA;actuate=1.7.5&#xA;tools=2.0.0-alpha.6&#xA;no-compilation&#xA;openfl-flash&#xA;web" />
+    <option directives="lime=2.0.0-alpha.6&#xA;screenmanager=0.1&#xA;tilelayer=0.2.0&#xA;openfl=2.1.4&#xA;actuate=1.7.5&#xA;openfl-share=1.0.1&#xA;tools=2.0.0-alpha.6&#xA;no-compilation&#xA;openfl-flash&#xA;web" />
     <option flashStrict="False" />
     <option noInlineOnDebug="False" />
     <option mainClass="ApplicationMain" />

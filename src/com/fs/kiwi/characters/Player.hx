@@ -7,6 +7,10 @@ import aze.display.TileSprite;
 import com.fs.kiwi.animation.Animation2D;
 import aze.display.TileGroup;
 import com.fs.kiwi.mapobjects.Platform;
+import com.fs.kiwi.mapobjects.Empty;
+import com.fs.kiwi.sound.Sound;
+import flash.geom.Point;
+import com.fs.kiwi.items.Kiwi;
 
 enum State
 {
@@ -61,7 +65,20 @@ class Player extends GameObject
 	private var prevGridX : Int;
 	private var prevGridY : Int;
 	
-	public function new(gridX:Int, gridY:Int) 
+	private var rightAhead : GravityDir;
+	private var leftAhead : GravityDir;
+	private var level : Array<Array<GameObject>>;
+	private var lives : Int = 3;
+	private var isHit : Bool;
+	private var hitTimer : Float;
+	private var hitTime : Float = 3;
+	private var alpha : Float;
+	
+	private var soundJump : Sound;
+	private var soundHit : Sound;
+	private var soundGameover : Sound;
+	
+	public function new(gridX:Int, gridY:Int, level : Array<Array<GameObject>>) 
 	{
 		super(TYPE, Globals.ROTATION_0, gridX, gridY);
 		
@@ -75,8 +92,14 @@ class Player extends GameObject
 		state = State.Fall;
 		direction = MoveDir.Right;
 		gravityDir = GravityDir.Down;
+		rightAhead = GravityDir.Down;
+		leftAhead = GravityDir.Down;
 		prevGridX = gridX;
 		prevGridY = gridY;
+		this.level = level;
+		isHit = false;
+		hitTimer = 0;
+		alpha = 1;
 	}
 	
 	override public function Reset():Void 
@@ -96,6 +119,11 @@ class Player extends GameObject
 		ChangeGravityDir(GravityDir.Down);
 		prevGridX = gridX;
 		prevGridY = gridY;
+	}
+	
+	public function GetLives() : Int
+	{
+		return lives;
 	}
 	
 	override public function LoadContent(tileLayer:TileLayer) 
@@ -153,11 +181,18 @@ class Player extends GameObject
 		animationTransformation = new TileGroupTransform(animation);
 		
 		ChangeAnimation(ANIM_IDLE);
+		
+		soundHit = new Sound(Globals.SOUND_HIT,false);
+		soundJump = new Sound(Globals.SOUND_JUMP,false);
+		soundGameover = new Sound(Globals.SOUND_GAMEOVER,false);
 	}
 	
 	override public function Update(gameTime:Float):Void 
 	{
 		super.Update(gameTime);
+		
+		var plat : Platform;
+		var rightDownObj, rightUpObj, leftDownObj, leftUpObj : GameObject;
 		
 		velX += accX;
 		velY += accY;
@@ -167,38 +202,188 @@ class Player extends GameObject
 		animation.x = x;
 		animation.y = y;
 		
+		rightDownObj = level[Globals.NUMBER_GRID_SQUARES_X - 1][Globals.NUMBER_GRID_SQUARES_Y - 1];
+		rightUpObj = level[Globals.NUMBER_GRID_SQUARES_X - 1][0];
+		leftDownObj = level[0][Globals.NUMBER_GRID_SQUARES_Y - 1];
+		leftUpObj = level[0][0];
+		
+		
 		gridX = cast((x - Globals.GRID_SEP_X / 2) / Globals.GRID_SEP_X, Int);
 		gridY = cast((y - Globals.GRID_SEP_Y / 2) / Globals.GRID_SEP_Y, Int);
 		
-		switch(state)
+		plat = null;
+		if ((prevGridX != gridX || prevGridY != gridY) && state == State.Walk)
 		{
-			case State.Walk:
-			case State.Fall:
-			case State.Idle:
-			case State.Jump:
-				if (animations.get(currentAnimation).HasEnded())
-				{
-					animations.get(currentAnimation).Restart();
-					velY = jumpImpulse;
-					accY = Globals.GRAVITY;
-					ChangeAnimation(ANIM_JUMP_UP);
-					state = State.Fall;
-				}
+			if (level[gridX][gridY].GetType() == Kiwi.TYPE)
+				cast(level[gridX][gridY], Kiwi).Pick();
+				
+			switch(direction)
+			{
+				case MoveDir.Right:
+						
+					switch(gravityDir)
+					{
+						case GravityDir.Down:
+							if (x + width / 2 >= rightDownObj.GetX() - rightDownObj.GetW() / 2)
+							{
+								plat = cast(rightDownObj, Platform);
+								rightAhead = GravityDir.Right;
+							}
+							else
+								rightAhead = GravityDir.Down;
+						case GravityDir.Left:
+							if (y + height / 2 >= leftDownObj.GetY() - leftDownObj.GetH() / 2)
+							{
+								plat = cast(leftDownObj, Platform);
+								rightAhead = GravityDir.Down;
+							}
+							else
+								rightAhead = GravityDir.Left;
+						case GravityDir.Right:
+							if (y - height / 2 <= rightUpObj.GetY() + rightUpObj.GetH() / 2)
+							{
+								plat = cast(rightUpObj, Platform);
+								rightAhead = GravityDir.Up;
+							}
+							else
+								rightAhead = GravityDir.Right;
+						case GravityDir.Up:
+							if (x - width / 2 <= leftUpObj.GetX() + leftUpObj.GetW() / 2)
+							{
+								plat = cast(leftUpObj, Platform);
+								rightAhead = GravityDir.Left;
+							}
+							else
+								rightAhead = GravityDir.Up;
+					}
+					
+					if (gravityDir != rightAhead)
+					{
+						if(gravityDir == GravityDir.Down || gravityDir == GravityDir.Up)
+							velX = 0;
+						if(gravityDir == GravityDir.Right || gravityDir == GravityDir.Left)
+							velY = 0;
+							
+						ChangeGravityDir(rightAhead);
+						
+						MoveRight(level);
+						if (plat != null)
+						{
+							switch(gravityDir)
+							{
+								case GravityDir.Down:
+									y = plat.GetY() - height / 2 - plat.GetH() / 2;
+									x = plat.GetX();
+								case GravityDir.Up:
+									y = plat.GetY() + height / 2 + plat.GetH() / 2;
+									x = plat.GetX();
+								case GravityDir.Left:
+									x = plat.GetX() + width / 2 + plat.GetW() / 2;
+									y = plat.GetY();
+								case GravityDir.Right:
+									x = plat.GetX() - width / 2 - plat.GetW() / 2;
+									y = plat.GetY();
+							}
+						}
+					}
+				case MoveDir.Left:
+					
+					switch(gravityDir)
+					{
+						case GravityDir.Down:
+							if (x - width / 2 <= leftDownObj.GetX() + leftDownObj.GetW() / 2)
+							{
+								leftAhead = GravityDir.Left;
+								plat = cast(leftDownObj, Platform);
+							}
+							else
+								leftAhead = GravityDir.Down;
+						case GravityDir.Left:
+							if (y - width / 2 <= leftUpObj.GetY() + leftUpObj.GetH() / 2)
+							{
+								leftAhead = GravityDir.Up;
+								plat = cast(leftUpObj, Platform);
+							}
+							else
+								leftAhead = GravityDir.Left;
+						case GravityDir.Right:
+							if (y + width / 2 >= rightDownObj.GetY() - rightDownObj.GetH() / 2)
+							{
+								leftAhead = GravityDir.Down;
+								plat = cast(rightDownObj, Platform);
+							}
+							else
+								leftAhead = GravityDir.Right;
+						case GravityDir.Up:
+							if (x + width / 2 >= rightUpObj.GetX() - rightUpObj.GetW() / 2)
+							{
+								plat = cast(rightUpObj, Platform);
+								leftAhead = GravityDir.Right;
+							}
+							else
+								leftAhead = GravityDir.Up;
+					}
+					
+					if (gravityDir != leftAhead)
+					{
+						if(gravityDir == GravityDir.Down || gravityDir == GravityDir.Up)
+							velX = 0;
+						if(gravityDir == GravityDir.Right || gravityDir == GravityDir.Left)
+							velY = 0;
+							
+						ChangeGravityDir(leftAhead);
+						
+						MoveLeft(level);
+						if (plat != null)
+						{
+							switch(gravityDir)
+							{
+								case GravityDir.Down:
+									y = plat.GetY() - height / 2 - plat.GetH() / 2;
+									x = plat.GetX();
+								case GravityDir.Up:
+									y = plat.GetY() + height / 2 + plat.GetH() / 2;
+									x = plat.GetX();
+								case GravityDir.Left:
+									x = plat.GetX() + width / 2 + plat.GetW() / 2;
+									y = plat.GetY();
+								case GravityDir.Right:
+									x = plat.GetX() - width / 2 - plat.GetW() / 2;
+									y = plat.GetY();
+							}
+						}
+					}
+			}
+				
+			prevGridX = gridX;
+			prevGridY = gridY;
 		}
 		
+		//Constraints
+		if (x - width / 2 < level[0][Globals.NUMBER_GRID_SQUARES_Y - 1].GetX() + level[0][Globals.NUMBER_GRID_SQUARES_Y - 1].GetW() / 2)
+			x = level[0][Globals.NUMBER_GRID_SQUARES_Y - 1].GetX() + level[0][Globals.NUMBER_GRID_SQUARES_Y - 1].GetW() / 2 + width / 2;
+		
+		if (x + width / 2 > level[Globals.NUMBER_GRID_SQUARES_X - 1][Globals.NUMBER_GRID_SQUARES_Y - 1].GetX() - level[Globals.NUMBER_GRID_SQUARES_X - 1][Globals.NUMBER_GRID_SQUARES_Y - 1].GetW() / 2)
+			x = level[Globals.NUMBER_GRID_SQUARES_X - 1][Globals.NUMBER_GRID_SQUARES_Y - 1].GetX() - level[Globals.NUMBER_GRID_SQUARES_X - 1][Globals.NUMBER_GRID_SQUARES_Y - 1].GetW() / 2 - width / 2;
+		
+		if (y + height / 2 > level[Globals.NUMBER_GRID_SQUARES_X - 1][Globals.NUMBER_GRID_SQUARES_Y - 1].GetY() - level[Globals.NUMBER_GRID_SQUARES_X - 1][Globals.NUMBER_GRID_SQUARES_Y - 1].GetH() / 2)
+			y = level[Globals.NUMBER_GRID_SQUARES_X - 1][Globals.NUMBER_GRID_SQUARES_Y - 1].GetY() - level[Globals.NUMBER_GRID_SQUARES_X - 1][Globals.NUMBER_GRID_SQUARES_Y - 1].GetH() / 2 - height / 2;
+		
+		if (y - height / 2 < level[Globals.NUMBER_GRID_SQUARES_X - 1][0].GetY() + level[Globals.NUMBER_GRID_SQUARES_X - 1][0].GetH() / 2)
+			y = level[Globals.NUMBER_GRID_SQUARES_X - 1][0].GetY() + level[Globals.NUMBER_GRID_SQUARES_X - 1][0].GetH() / 2 + height / 2;
+			
 		//Rotation
 		switch(rotation)
 		{
 			case Globals.ROTATION_0:
 				animations.get(currentAnimation).Rotate(0);
 			case Globals.ROTATION_90:
-				animations.get(currentAnimation).Rotate(-(Math.PI + Math.PI/4));
+				animations.get(currentAnimation).Rotate(Math.PI/2);
 			case Globals.ROTATION_180:
 				animations.get(currentAnimation).Rotate(Math.PI);
 			case Globals.ROTATION_270:
-				animations.get(currentAnimation).Rotate(Math.PI + Math.PI/4);
+				animations.get(currentAnimation).Rotate(Math.PI + Math.PI/2);
 		}
-		
 		
 		//FLip
 		switch(direction)
@@ -211,6 +396,25 @@ class Player extends GameObject
 		
 		for (a in animations)
 			a.Update(gameTime);
+			
+		if (isHit)
+		{
+			if (hitTimer > Helper.ConvertSecToMillisec(hitTime))
+			{
+				isHit = false;
+				alpha = 1;
+				hitTimer = 0;
+			}
+			else
+				hitTimer += gameTime;
+		}
+		
+		animations.get(currentAnimation).ChangeAlpha(alpha);
+	}
+	
+	public function IsHit() : Bool
+	{
+		return isHit;
 	}
 	
 	public function GetVelX() : Float
@@ -231,7 +435,7 @@ class Player extends GameObject
 	private function ChangeGravityDir(dir : GravityDir) : Void
 	{
 		gravityDir = dir;
-		trace(dir);
+		
 		switch(dir)
 		{
 			case GravityDir.Down:
@@ -245,249 +449,247 @@ class Player extends GameObject
 		}
 	}
 	
-	/*public function Move(speed : Float) : Void
-	{	
-		velX = speed;
-		if (speed > 0)
-			direction = MoveDir.Right;
-		else
-			direction = MoveDir.Left;
-			
-		if(state == State.Walk)
-			ChangeAnimation(ANIM_WALK);
-	}*/
-	
 	override public function HandlePhysics(level:Array<Array<GameObject>>):Void 
 	{
 		super.HandlePhysics(level);
 		
 		var plat : Platform;
-		switch(gravityDir)
+		if (state == State.Fall)
 		{
-			case GravityDir.Down:
-				if (state == State.Fall)
-				{
-					//Down Collision
-					if (velY >= 0)
-					{
-						if (gridY + 1 < Globals.NUMBER_GRID_SQUARES_Y)
-						{	
-							if (level[gridX][gridY + 1].GetType() == Platform.TYPE)
-							{
-								plat = cast(level[gridX][gridY + 1], Platform);
-								if (y + velY + height/2 >= plat.GetY())
+			switch(gravityDir)
+			{
+				case GravityDir.Down:
+					
+						//Down Collision
+						if (velY >= 0)
+						{
+							if (gridY + 1 < Globals.NUMBER_GRID_SQUARES_Y)
+							{	
+								if (level[gridX][gridY + 1].GetType() == Platform.TYPE)
 								{
-									state = State.Walk;
-									if(velX == 0)
-										ChangeAnimation(ANIM_IDLE);
-									y = plat.GetY() - height/2;
-									accY = 0;
-									velY = 0;
+									plat = cast(level[gridX][gridY + 1], Platform);
+									if (x + width / 2 >= plat.GetX() - plat.GetW() / 2 && x - width / 2 <= plat.GetX() + plat.GetW() / 2)
+									{
+										if (y + velY + height/2 >= plat.GetY() - plat.GetH()/2)
+										{
+											state = State.Walk;
+											if(velX == 0)
+												ChangeAnimation(ANIM_IDLE);
+											y = plat.GetY() - height/2 - plat.GetH()/2;
+											accY = 0;
+											velY = 0;
+										}
+									}
+								}
+							}
+						}
+						
+						//Up Collision
+						if (velY <= 0)
+						{
+							if (gridY - 1 >= 0)
+							{	
+								if (level[gridX][gridY - 1].GetType() == Platform.TYPE)
+								{
+									plat = cast(level[gridX][gridY - 1], Platform);
+									if (x + width / 2 >= plat.GetX() - plat.GetW() / 2 && x - width / 2 <= plat.GetX() + plat.GetW() / 2)
+									{
+										if (y + velY - height/2 <= plat.GetY() + plat.GetH()/2)
+										{
+											y = plat.GetY() + height/2 + plat.GetH()/2;
+											velY = 0;
+										}
+									}
+								}
+							}
+						}
+				case GravityDir.Left:
+					//Down Collision
+					if (velX <= 0)
+					{
+						if (gridX - 1 >= 0)
+						{	
+							if (level[gridX - 1][gridY].GetType() == Platform.TYPE)
+							{
+								plat = cast(level[gridX - 1][gridY], Platform);
+								if (y + height / 2 >= plat.GetY() - plat.GetH() / 2 && y - height / 2 <= plat.GetY() + plat.GetH() / 2)
+								{
+									if (x + velX - width/2 <= plat.GetX() + plat.GetW()/2)
+									{
+										state = State.Walk;
+										if(velY == 0)
+											ChangeAnimation(ANIM_IDLE);
+										x = plat.GetX() + width/2 + plat.GetW()/2;
+										accX = 0;
+										velX = 0;
+									}
 								}
 							}
 						}
 					}
 					
+					//Up Collision
+					if (velX >= 0)
+					{
+						if (gridX + 1 <= 0)
+						{	
+							if (level[gridX + 1][gridY].GetType() == Platform.TYPE)
+							{
+								plat = cast(level[gridX + 1][gridY], Platform);
+								if (y + height / 2 >= plat.GetY() - plat.GetH() / 2 && y - height / 2 <= plat.GetY() + plat.GetH() / 2)
+								{
+									if (x + velX + width/2 >= plat.GetX() - plat.GetW()/2)
+									{
+										x = plat.GetX() - width/2 - plat.GetW()/2;
+										velX = 0;
+									}
+								}
+							}
+						}
+					}
+				case GravityDir.Right:
+					//Down Collision
+					if (velX >= 0)
+					{
+						if (gridX + 1 < Globals.NUMBER_GRID_SQUARES_X)
+						{	
+							if (level[gridX + 1][gridY].GetType() == Platform.TYPE)
+							{
+								plat = cast(level[gridX + 1][gridY], Platform);
+								if (y + height / 2 >= plat.GetY() - plat.GetH() / 2 && y - height / 2 <= plat.GetY() + plat.GetH() / 2)
+								{
+									if (x + velX + width/2 >= plat.GetX() - plat.GetW()/2)
+									{
+										state = State.Walk;
+										if(velY == 0)
+											ChangeAnimation(ANIM_IDLE);
+										x = plat.GetX() - width/2 - plat.GetW()/2;
+										accX = 0;
+										velX = 0;
+									}
+								}
+							}
+						}
+					}
+					
+					//Up Collision
+					if (velX <= 0)
+					{
+						if (gridX - 1 >= 0)
+						{	
+							if (level[gridX - 1][gridY].GetType() == Platform.TYPE)
+							{
+								plat = cast(level[gridX - 1][gridY], Platform);
+								if (y + height / 2 >= plat.GetY() - plat.GetH() / 2 && y - height / 2 <= plat.GetY() + plat.GetH() / 2)
+								{
+									if (x + velX - width/2 <= plat.GetX() + plat.GetW()/2)
+									{
+										x = plat.GetX() + width/2 + plat.GetW()/2;
+										velX = 0;
+									}
+								}
+							}
+						}
+					}
+				case GravityDir.Up:
+					//Down Collision
 					if (velY <= 0)
 					{
-						//Up Collision
 						if (gridY - 1 >= 0)
 						{	
 							if (level[gridX][gridY - 1].GetType() == Platform.TYPE)
 							{
 								plat = cast(level[gridX][gridY - 1], Platform);
-								if (y + velY - height/2 <= plat.GetY() + plat.GetH()/2)
+								if (x + width / 2 >= plat.GetX() - plat.GetW() / 2 && x - width / 2 <= plat.GetX() + plat.GetW() / 2)
 								{
-									y = plat.GetY() + height/2 + plat.GetH()/2;
-									velY = 0;
+									if (y + velY - height/2 <= plat.GetY() + plat.GetH()/2)
+									{
+										state = State.Walk;
+										if(velX == 0)
+											ChangeAnimation(ANIM_IDLE);
+										y = plat.GetY() + height/2 + plat.GetH()/2;
+										accY = 0;
+										velY = 0;
+									}
 								}
 							}
 						}
 					}
-				}
-			case GravityDir.Left:
-			case GravityDir.Right:
-			case GravityDir.Up:
+					
+					//Up Collision
+					if (velY >= 0)
+					{
+						if (gridY + 1 <= 0)
+						{	
+							if (level[gridX][gridY + 1].GetType() == Platform.TYPE)
+							{
+								plat = cast(level[gridX][gridY + 1], Platform);
+								if (x + width / 2 >= plat.GetX() - plat.GetW() / 2 && x - width / 2 <= plat.GetX() + plat.GetW() / 2)
+								{
+									if (y + velY + height/2 >= plat.GetY() - plat.GetH()/2)
+									{
+										y = plat.GetY() - height/2 - plat.GetH()/2;
+										velY = 0;
+									}
+								}
+							}
+						}
+					}
+			}
 		}
+	}
+	
+	public function Hit() : Void
+	{
+		alpha = 0.5;
+		lives--;
+		isHit = true;
+		if(lives > 0)
+			soundHit.Play();
+		else
+			soundGameover.Play();
 	}
 	
 	public function MoveRight(level : Array<Array<GameObject>>) : Void
 	{	
-		var newGridX, newGridY : Int;
-		
-		//x += 1;
-		
-		velX = Globals.PLAYER_SPEED;
-		direction = MoveDir.Right;
-		ChangeAnimation(ANIM_WALK);
-		
-		/*switch(gravityDir)
+		if (state == State.Walk)
 		{
-			case GravityDir.Down:
-				if (prevGridX == gridX)
-				{
-					//This is a platform, the next one is empty => out-corner (one platform)
-					if (Helper.GetLevelType(level,gridX,gridY) == Platform.TYPE && Helper.GetLevelType(level,gridX + 1,gridY) == "0")
-					{
-						ChangeGravityDir(GravityDir.Left);
-						velX = 0;
-						velY = Globals.PLAYER_SPEED;
-					}
-					else
-						velX = Globals.PLAYER_SPEED;
-				}
-				else
-				{	
-					//This is a platform, you are about to collide against a platform => in-corner
-					if (Helper.GetLevelType(level,gridX ,gridY) == Platform.TYPE && Helper.GetLevelType(level,gridX,gridY - 1) == Platform.TYPE)
-					{
-						ChangeGravityDir(GravityDir.Right);
-						velX = 0;
-						velY = -Globals.PLAYER_SPEED;
-					}
-					//This is a platform, the next one is empty => out-corner
-					else if (Helper.GetLevelType(level,gridX,gridY) == Platform.TYPE && Helper.GetLevelType(level,gridX + 1,gridY) == "0")
-					{
-						ChangeGravityDir(GravityDir.Left);
-						velX = 0;
-						velY = Globals.PLAYER_SPEED;
-					}
-					else
-						velX = Globals.PLAYER_SPEED;
-				}
-			case GravityDir.Up:
-				if (prevGridX == gridX)
-				{
-					//This is a platform, the next one is empty => out-corner (one platform)
-					if (Helper.GetLevelType(level,gridX,gridY) == Platform.TYPE && Helper.GetLevelType(level,gridX - 1,gridY) == "0")
-					{
-						ChangeGravityDir(GravityDir.Right);
-						velX = 0;
-						velY = -Globals.PLAYER_SPEED;
-					}
-					else
-						velX = -Globals.PLAYER_SPEED;
-				}
-				else
-				{	
-					//This is a platform, you are about to collide against a platform => in-corner
-					if (Helper.GetLevelType(level,gridX ,gridY) == Platform.TYPE && Helper.GetLevelType(level,gridX,gridY + 1) == Platform.TYPE)
-					{
-						ChangeGravityDir(GravityDir.Left);
-						velX = 0;
-						velY = Globals.PLAYER_SPEED;
-					}
-					//This is a platform, the next one is empty => out-corner
-					else if (Helper.GetLevelType(level,gridX,gridY) == Platform.TYPE && Helper.GetLevelType(level,gridX - 1,gridY) == "0")
-					{
-						ChangeGravityDir(GravityDir.Right);
-						velX = 0;
-						velY = -Globals.PLAYER_SPEED;
-					}
-					else
-						velX = -Globals.PLAYER_SPEED;
-				}
-				
-			case GravityDir.Right:
-				if (prevGridY == gridY)
-				{
-					//This is a platform, the next one is empty => out-corner (one platform)
-					if (Helper.GetLevelType(level,gridX,gridY) == Platform.TYPE && Helper.GetLevelType(level,gridX,gridY - 1) == "0")
-					{
-						ChangeGravityDir(GravityDir.Down);
-						velY = 0;
-						velX = Globals.PLAYER_SPEED;
-					}
-					else
-						velY = -Globals.PLAYER_SPEED;
-				}
-				else
-				{	
-					//This is a platform, you are about to collide against a platform => in-corner
-					if (Helper.GetLevelType(level,gridX,gridY) == Platform.TYPE && Helper.GetLevelType(level,gridX - 1,gridY) == Platform.TYPE)
-					{
-						ChangeGravityDir(GravityDir.Up);
-						velX = -Globals.PLAYER_SPEED;
-						velY = 0;
-						
-					}
-					//This is a platform, the next one is empty => out-corner
-					else if (Helper.GetLevelType(level,gridX,gridY) == Platform.TYPE && Helper.GetLevelType(level,gridX,gridY - 1) == "0")
-					{
-						ChangeGravityDir(GravityDir.Down);
-						velY = 0;
-						velX = Globals.PLAYER_SPEED;
-					}
-					else
-						velY = -Globals.PLAYER_SPEED;
-				}
-			case GravityDir.Left:
-				if (prevGridY == gridY)
-				{
-					//This is a platform, the next one is empty => out-corner (one platform)
-					if (Helper.GetLevelType(level,gridX,gridY) == Platform.TYPE && Helper.GetLevelType(level,gridX,gridY + 1) == "0")
-					{
-						ChangeGravityDir(GravityDir.Up);
-						velY = 0;
-						velX = -Globals.PLAYER_SPEED;
-					}
-					else
-						velY = Globals.PLAYER_SPEED;
-				}
-				else
-				{	
-					//This is a platform, you are about to collide against a platform => in-corner
-					if (Helper.GetLevelType(level,gridX,gridY) == Platform.TYPE && Helper.GetLevelType(level,gridX + 1,gridY) == Platform.TYPE)
-					{
-						ChangeGravityDir(GravityDir.Down);
-						velX = Globals.PLAYER_SPEED;
-						velY = 0;
-						
-					}
-					//This is a platform, the next one is empty => out-corner
-					else if (Helper.GetLevelType(level,gridX,gridY) == Platform.TYPE && Helper.GetLevelType(level,gridX,gridY + 1) == "0")
-					{
-						ChangeGravityDir(GravityDir.Up);
-						velY = 0;
-						velX = -Globals.PLAYER_SPEED;
-					}
-					else
-						velY = Globals.PLAYER_SPEED;
-				}
-		}*/
-		
-		prevGridX = gridX;
-		prevGridY = gridY;
+			direction = MoveDir.Right;
+			ChangeAnimation(ANIM_WALK);
+			
+			switch(gravityDir)
+			{
+				case GravityDir.Down:
+					velX = Globals.PLAYER_SPEED;
+				case GravityDir.Left:
+					velY = Globals.PLAYER_SPEED;
+				case GravityDir.Right:
+					velY = -Globals.PLAYER_SPEED;
+				case GravityDir.Up:
+					velX = -Globals.PLAYER_SPEED;
+			}
+		}
 	}
 	
 	public function MoveLeft(level : Array<Array<GameObject>>) : Void
 	{	
-		velX = -Globals.PLAYER_SPEED;
-		direction = MoveDir.Left;
-		ChangeAnimation(ANIM_WALK);
-		
-		//x -= 1;
-		/*switch(gravityDir)
+		if (state == State.Walk)
 		{
-			case GravityDir.Down:
-				velX = -Globals.PLAYER_SPEED;
-			case GravityDir.Up:
-				velX = Globals.PLAYER_SPEED;
-			case GravityDir.Right:
-				velY = Globals.PLAYER_SPEED;
-			case GravityDir.Left:
-				velY = -Globals.PLAYER_SPEED;
-		}*/
-	}
-	
-	public function MoveUp(level : Array<Array<GameObject>>) : Void
-	{	
-		y -= 1;
-	}
-	
-	public function MoveDown(level : Array<Array<GameObject>>) : Void
-	{	
-		y += 1;
+			direction = MoveDir.Left;
+			ChangeAnimation(ANIM_WALK);
+			
+			switch(gravityDir)
+			{
+				case GravityDir.Down:
+					velX = -Globals.PLAYER_SPEED;
+				case GravityDir.Left:
+					velY = -Globals.PLAYER_SPEED;
+				case GravityDir.Right:
+					velY = Globals.PLAYER_SPEED;
+				case GravityDir.Up:
+					velX = Globals.PLAYER_SPEED;
+			}
+		}
 	}
 	
 	public function Stop() : Void
@@ -507,27 +709,29 @@ class Player extends GameObject
 		ChangeAnimation(ANIM_IDLE);
 	}
 	
-	public function StopFalling() : Void
-	{
-		velY = 0;
-		accY = 0;
-		//x = Globals.GRID_SEP_X/2 + Globals.GRID_SEP_X * gridX;
-		//y = Globals.GRID_SEP_Y / 2 + Globals.GRID_SEP_Y * gridY - Globals.GRID_SEP_Y/2;
-		state = State.Walk;
-	}
-	
 	public function Jump(level : Array<Array<GameObject>>) : Void
 	{
 		if (state == State.Walk)
 		{
-			velY = -Globals.PLAYER_JUMP_IMP;
-			accY = Globals.GRAVITY;
+			switch(gravityDir)
+			{
+				case GravityDir.Down:
+					velY = -Globals.PLAYER_JUMP_IMP;
+					accY = Globals.GRAVITY;
+				case GravityDir.Up:
+					velY = Globals.PLAYER_JUMP_IMP;
+					accY = -Globals.GRAVITY;
+				case GravityDir.Left:
+					velX = Globals.PLAYER_JUMP_IMP;
+					accX = -Globals.GRAVITY;
+				case GravityDir.Right:
+					velX = -Globals.PLAYER_JUMP_IMP;
+					accX = Globals.GRAVITY;
+			}
+			
 			state = State.Fall;
+			soundJump.Play();
 		}
-		
-		/*jumpImpulse = impulse;
-		ChangeAnimation(ANIM_START_JUMP);
-		state = State.Jump;*/
 	}
 	
 	

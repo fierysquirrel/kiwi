@@ -586,6 +586,8 @@ class Animation2D implements IAnimation
 	public function ScaleY(scale : Float)
 	{
 		//frames[currentFrame].scaleY = scale * Helper.GetFixScale();
+		for(f in frames)
+			f.scaleY = scale;// * Helper.GetFixScale();
 	}
 	
 	/*

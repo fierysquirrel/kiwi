@@ -27,8 +27,56 @@ class ApplicationMain {
 		var types = [];
 		
 		
+		urls.push ("assets/fonts/TektonProBold.ttf");
+		types.push (AssetType.FONT);
+		
+		
 		urls.push ("assets/openfl.svg");
 		types.push (AssetType.TEXT);
+		
+		
+		urls.push ("assets/sounds/bullet-collide.wav");
+		types.push (AssetType.SOUND);
+		
+		
+		urls.push ("assets/sounds/gameover.wav");
+		types.push (AssetType.SOUND);
+		
+		
+		urls.push ("assets/sounds/hit.wav");
+		types.push (AssetType.SOUND);
+		
+		
+		urls.push ("assets/sounds/jump.wav");
+		types.push (AssetType.SOUND);
+		
+		
+		urls.push ("assets/sounds/kiwi.wav");
+		types.push (AssetType.SOUND);
+		
+		
+		urls.push ("assets/sounds/new-kiwi.wav");
+		types.push (AssetType.SOUND);
+		
+		
+		urls.push ("assets/sounds/shoot.wav");
+		types.push (AssetType.SOUND);
+		
+		
+		urls.push ("assets/sounds/soundtrack.mp3");
+		types.push (AssetType.MUSIC);
+		
+		
+		urls.push ("assets/sounds/soundtrack.ogg");
+		types.push (AssetType.SOUND);
+		
+		
+		urls.push ("assets/sprites/gameover.png");
+		types.push (AssetType.IMAGE);
+		
+		
+		urls.push ("assets/sprites/intro.png");
+		types.push (AssetType.IMAGE);
 		
 		
 		urls.push ("assets/sprites/spritesheet.png");

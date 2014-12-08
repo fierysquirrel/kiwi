@@ -12,6 +12,7 @@ class Item extends GameObject
 {
 	private var sprite : TileSprite;
 	private var spriteName : String;
+	private var isPicked : Bool;
 	
 	public function new(type:String,rotation : String,spriteName : String, gridX:Int, gridY:Int) 
 	{
@@ -28,5 +29,20 @@ class Item extends GameObject
 		sprite.x = x;
 		sprite.y = y;
 		tileLayer.addChild(sprite);
+	}
+	
+	public function IsPicked() : Bool
+	{
+		return isPicked;
+	}
+	
+	public function Pick() : Void
+	{
+		isPicked = true;
+	}
+	
+	public function GetSprite() : TileSprite
+	{
+		return sprite;
 	}
 }
